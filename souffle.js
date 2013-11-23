@@ -78,11 +78,12 @@
     },
 
     isURL: {
-      fn: function() {
-
+      fn: function(val) {
+        var regex = '^((http:\/\/www\.)|(www\.)|(http:\/\/))[a-zA-Z0-9._-]+\.[a-zA-Z.]{2,5}$';
+        return val.match(regex);
       },
       error: function(val) {
-
+        return {message: 'Not a valid URL'};
       }
     },
 
