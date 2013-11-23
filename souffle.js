@@ -52,10 +52,17 @@
 
     isArray: {
       fn: function(val) {
-        
+        if (Array.isArray) {
+          return Array.isArray(val);
+        }
+
+        // IE < 9
+        else {
+          return Object.prototype.toString.call(val) === "[object Array]";
+        }
       },
       error: function(val) {
-
+        return {message: 'Not an array'};
       }
     },
 
