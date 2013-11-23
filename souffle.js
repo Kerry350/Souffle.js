@@ -1,42 +1,7 @@
 (function(root) {
 
   /* 
-
-    Two APIs, one for validating entire objects against a set of rules. Another for direct validations.
-
-    Rule object: 
-
-      Souffle({
-        name: 'Magical Donkey', 
-        age: 15,
-        owner: {
-          firstName: 'Magic', 
-          lastName: 'Dave'
-        }
-      },
-
-      {
-        name: {
-          isString: true, 
-          minLength: 10, 
-          maxLength: 20
-        },
-
-        age: {
-          isNotBlank: true
-        },
-
-        owner: {
-          firstName: {
-            isNotBlank: true
-          },
-          lastName: {
-            isNotBlank: true
-          }
-        }
-      }); // Returns an errors array
-
-      Souffle('Donkey').isString().length(5, 10).exec();
+    Two APIs, one for validating entire objects against a set of rules. Another for direct validations with a chainable API.
   */
 
   // Validations will return false if failed, and true if they pass
@@ -125,23 +90,24 @@
     },
 
     minLength: {
-      fn: function() {
-
+      fn: function(val, min) {
+        return val >= min;
       },
-      error: function(val) {
-
+      error: function(val, min) {
+        return {message: val + ' must be more than ' + min};
       }
     },
 
     maxLength: {
-      fn: function() {
-
+      fn: function(val, max) {
+        return val <= max;
       },
-      error: function(val) {
-
+      error: function(val, max) {
+        return {message: val + ' must be less than ' + max};
       }
     },
 
+    // IE >= 9
     minKeys: {
       fn: function() {
 
@@ -168,7 +134,7 @@
     }
 
     if (!values && !rules) {
-      throw new Error('Please either provide an object and corresponding ruleset, or a value');
+      throw new Error('Souffle.js: Please either provide an object and corresponding ruleset, or a value');
     }
 
     if ((values && typeof values === 'object') && (rules && typeof rules === 'object')) {
@@ -186,7 +152,44 @@
 
   Souffle.prototype = {
     validateRuleset: function(values, rules, errors) {
+  
+      for (var key in rules) {
+        
+        var value = values[key];
 
+        // Object and NOT an array
+        if (typeof value === 'object') {
+          this.validateRuleset(value, rules[key], errors);
+          continue; // Don't bother looping these rules, it's taken care of by the recursive call
+        }
+
+        for (var rule in rules[key]) {
+         
+          var expectedOutcome = rules[key][rule];
+
+          // If we've been given a boolean to test against we'll see if the validation function returns the same boolean result
+          if (typeof expectedOutcome === 'boolean') {
+            try {
+              if (validations[rule].fn(value) !== expectedOutcome) {
+                errors.push(validations[rule].error(value))    
+              }
+            } catch(e) {
+              errors.push(validations[rule].error(value))
+            }
+          }
+
+          // if we've been given a value (like 10 for minLength etc) we're testing to see if the validation function returns true (thus passes)
+          else {
+            try {
+              if (!validations[rule].fn(value, expectedOutcome)) {
+                errors.push(validations[rule].error(value, expectedOutcome));
+              }
+            } catch(e) {
+              errors.push(validations[rule].error(value, expectedOutcome));
+            }
+          }
+        }
+      }
     },
 
     exec: function() {
@@ -194,7 +197,7 @@
     }
   };
 
-  // Add all of the validation checks to the Souffle prototype
+  // Add all of the validation checks to the Souffle prototype, allows us the flexibility to use two APIs
   for (var key in validations) {
     if (validations.hasOwnProperty(key)) {
       // Within an IIFE so we have the correct reference to 'key'
