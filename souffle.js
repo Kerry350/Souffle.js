@@ -39,7 +39,8 @@
       Souffle('Donkey').isString().length(5, 10).exec();
   */
 
-  validations: {
+  // Validations will return false if failed, and true if they pass
+  validations = {
     isNumber: {
       fn: function() {
 
@@ -95,11 +96,11 @@
     },
 
     isNotBlank: {
-      fn: function() {
-
+      fn: function(val) {
+        return val.trim().length > 0 ? true : false;
       },
       error: function(val) {
-
+        return {message: 'Cannot be blank'};
       }
     },
 
@@ -151,6 +152,10 @@
 
 
   var Souffle = function(values, rules) {
+    if (!(this instanceof Souffle)) {
+      return new Souffle(values, rules);
+    }
+
     if (!values && !rules) {
       throw new Error('Please either provide an object and corresponding ruleset, or a value');
     }
@@ -168,26 +173,33 @@
     }
   };
 
-  // Add all of the validation checks to the Souffle prototype
-  for (var key in validations) {
-    if (validations.hasOwnProperty(key)) {
-      Souffle.prototype[key] = function() {
-        var args = Array.prototype.slice.call(arguments);
-        args.unshift(this.value);
-        
-      };
-    }
-  }
-
   Souffle.prototype = {
     validateRuleset: function(values, rules, errors) {
 
     },
 
     exec: function() {
-      // return this errors
+      return this.errors;
     }
   };
+
+  // Add all of the validation checks to the Souffle prototype
+  for (var key in validations) {
+    if (validations.hasOwnProperty(key)) {
+      // Within an IIFE so we have the correct reference to 'key'
+      (function(key) {
+        Souffle.prototype[key] = function() {
+          var args = Array.prototype.slice.call(arguments);
+          args.unshift(this.value);
+          if (!validations[key].fn.apply(null, args)) {
+            this.errors.push(validations[key].error(args))
+          }
+          
+          return this;
+        };
+      })(key);
+    }
+  }
 
   root.Souffle = Souffle;
 
