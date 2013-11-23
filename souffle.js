@@ -89,7 +89,7 @@
       }
     },
 
-    minLength: {
+    minValue: {
       fn: function(val, min) {
         return val >= min;
       },
@@ -98,7 +98,7 @@
       }
     },
 
-    maxLength: {
+    maxValue: {
       fn: function(val, max) {
         return val <= max;
       },
