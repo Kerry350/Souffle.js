@@ -137,6 +137,15 @@
       error: function(val) {
 
       }
+    },
+
+    contains: {
+      fn: function() {
+
+      },
+      error: function(val) {
+
+      } 
     }
   };
 
@@ -159,7 +168,22 @@
     }
   };
 
+  // Add all of the validation checks to the Souffle prototype
+  for (var key in validations) {
+    if (validations.hasOwnProperty(key)) {
+      Souffle.prototype[key] = function() {
+        var args = Array.prototype.slice.call(arguments);
+        args.unshift(this.value);
+        
+      };
+    }
+  }
+
   Souffle.prototype = {
+    validateRuleset: function(values, rules, errors) {
+
+    },
+
     exec: function() {
       // return this errors
     }
