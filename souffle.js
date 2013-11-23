@@ -42,17 +42,17 @@
   // Validations will return false if failed, and true if they pass
   validations = {
     isNumber: {
-      fn: function() {
-
+      fn: function(val) {
+        return typeof val === 'number';
       },
       error: function(val) {
-
+        return {message: 'Not a number'};
       }
     },
 
     isArray: {
-      fn: function() {
-
+      fn: function(val) {
+        
       },
       error: function(val) {
 
@@ -60,25 +60,28 @@
     },
 
     isString: {
-      fn: function() {
-
+      fn: function(val) {
+        return typeof val === 'string';
       },
       error: function(val) {
-
+        return {message: 'Not a string'};
       }
     },
 
     isEmail: {
-      fn: function() {
-
+      fn: function(val) {
+        // http://regexlib.com/REDetails.aspx?regexp_id=2119
+        var regex = '^([a-zA-Z0-9]+([\.+_-][a-zA-Z0-9]+)*)@(([a-zA-Z0-9]+((\.|[-]{1,2})[a-zA-Z0-9]+)*)\.[a-zA-Z]{2,6})$';
+        return val.match(regex);
       },
       error: function(val) {
-
+        return {message: 'Not a valid email address'};
       }
     },
 
     isURL: {
       fn: function(val) {
+        // http://regexlib.com/REDetails.aspx?regexp_id=3088
         var regex = '^((http:\/\/www\.)|(www\.)|(http:\/\/))[a-zA-Z0-9._-]+\.[a-zA-Z.]{2,5}$';
         return val.match(regex);
       },
@@ -88,11 +91,11 @@
     },
 
     matches: {
-      fn: function() {
-
+      fn: function(val, regex) {
+        return val.match(regex);
       },
-      error: function(val) {
-
+      error: function(val, regex) {
+        return {message: 'Does not match the provided regular expression'};
       }
     },
 
@@ -193,7 +196,7 @@
           var args = Array.prototype.slice.call(arguments);
           args.unshift(this.value);
           if (!validations[key].fn.apply(null, args)) {
-            this.errors.push(validations[key].error(args))
+            this.errors.push(validations[key].error.apply(null, args))
           }
           
           return this;
